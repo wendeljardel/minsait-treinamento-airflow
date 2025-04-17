@@ -1,21 +1,57 @@
+"""
+DAG para extrair dados de coleções do MongoDB e processá-los.
+Esta DAG realiza as seguintes operações:
+1. Extrai dados da coleção 'users'
+2. Extrai dados da coleção 'payments'
+3. Processa e resume os dados extraídos
+"""
+
 import os
 import json
 import pandas as pd
-from json import json_util
 from dotenv import load_dotenv
 from airflow.decorators import task, dag
-from airflow.providers.mongo.hooks.mongo import MongoHook
+from pymongo import MongoClient
 from datetime import datetime, timedelta
 
+# Carregar variáveis de ambiente
 load_dotenv()
 
+# Configurações do MongoDB
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://minsair-user:QLZcPUxeyrEf@minsait-airflow.tvllgfj.mongodb.net/?appName=minsait-airflow')
 MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'minsait')
 
+# Verificar se as variáveis necessárias estão definidas
+if not MONGODB_URI or not MONGODB_DB_NAME:
+    raise ValueError("MONGODB_URI and MONGODB_DB_NAME must be set in environment variables")
+
+# Argumentos padrão da DAG
 default_args = {
     'owner': 'Wendel Vasconcelos',
     'retries': 1,
-    'retry_delay': timedelta(minutes=5)
+    'retry_delay': timedelta(minutes=5),
+    'email_on_failure': True,
+    'email_on_retry': True
 }
+
+def convert_timestamps_to_strings(data):
+    """
+    Converte todos os timestamps em um dicionário para strings ISO format.
+    
+    Args:
+        data: Dicionário, lista ou valor a ser convertido
+        
+    Returns:
+        Dados com timestamps convertidos para strings
+    """
+    if isinstance(data, dict):
+        return {k: convert_timestamps_to_strings(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_timestamps_to_strings(item) for item in data]
+    elif isinstance(data, pd.Timestamp):
+        return data.isoformat()
+    else:
+        return data
 
 @dag(
     dag_id='hk-mongodb-collections-json',
@@ -23,22 +59,33 @@ default_args = {
     schedule_interval=None,
     start_date=datetime(2024, 10, 20),
     catchup=False,
-    tags=['hook', 'mongodb', 'extract']
+    tags=['hook', 'mongodb', 'extract'],
+    description='DAG para extrair e processar dados do MongoDB'
 )
 def mongodb_data_extract_json():
 
     @task()
     def extract_users():
+        """
+        Extrai dados da coleção 'users' do MongoDB.
+        
+        Returns:
+            Lista de dicionários contendo os dados dos usuários
+        """
         try:
-            hook = MongoHook(conn_id='mongodb_default')
-            client = hook.get_conn()
-            db = client.minsait
+            client = MongoClient(MONGODB_URI)
+            db = client[MONGODB_DB_NAME]
 
             try:
                 users_cursor = db.users.find({})
                 users_list = list(users_cursor)
-                users_json = json.loads(json_util.dumps(users_list))
-                df_users = pd.DataFrame(users_json)
+                
+                # Convertendo ObjectId para string para serialização JSON
+                for user in users_list:
+                    if '_id' in user:
+                        user['_id'] = str(user['_id'])
+                
+                df_users = pd.DataFrame(users_list)
 
                 print(f"Successfully extracted {len(df_users)} records from Users collection")
                 if not df_users.empty:
@@ -47,7 +94,9 @@ def mongodb_data_extract_json():
                 else:
                     print("Warning: No records found in Users collection")
 
-                return df_users.to_dict('records')
+                # Converter timestamps para strings antes de retornar
+                users_dict = df_users.to_dict('records')
+                return convert_timestamps_to_strings(users_dict)
 
             except Exception as e:
                 print(f"Error during Users collection processing: {str(e)}")
@@ -61,16 +110,26 @@ def mongodb_data_extract_json():
 
     @task()
     def extract_payments():
+        """
+        Extrai dados da coleção 'payments' do MongoDB.
+        
+        Returns:
+            Lista de dicionários contendo os dados de pagamentos
+        """
         try:
-            hook = MongoHook(conn_id='mongodb_default')
-            client = hook.get_conn()
-            db = client.minsait
+            client = MongoClient(MONGODB_URI)
+            db = client[MONGODB_DB_NAME]
 
             try:
                 payments_cursor = db.payments.find({})
                 payments_list = list(payments_cursor)
-                payments_json = json.loads(json_util.dumps(payments_list))
-                df_payments = pd.DataFrame(payments_json)
+                
+                # Convertendo ObjectId para string para serialização JSON
+                for payment in payments_list:
+                    if '_id' in payment:
+                        payment['_id'] = str(payment['_id'])
+                
+                df_payments = pd.DataFrame(payments_list)
 
                 print(f"Successfully extracted {len(df_payments)} records from Payments collection")
                 if not df_payments.empty:
@@ -79,7 +138,9 @@ def mongodb_data_extract_json():
                 else:
                     print("Warning: No records found in Payments collection")
 
-                return df_payments.to_dict('records')
+                # Converter timestamps para strings antes de retornar
+                payments_dict = df_payments.to_dict('records')
+                return convert_timestamps_to_strings(payments_dict)
 
             except Exception as e:
                 print(f"Error during Payments collection processing: {str(e)}")
@@ -93,6 +154,16 @@ def mongodb_data_extract_json():
 
     @task()
     def process_data(users_data, payments_data):
+        """
+        Processa e resume os dados extraídos das coleções.
+        
+        Args:
+            users_data: Dados da coleção 'users'
+            payments_data: Dados da coleção 'payments'
+            
+        Returns:
+            Dicionário contendo o resumo dos dados processados
+        """
         try:
             df_users = pd.DataFrame(users_data) if users_data else pd.DataFrame()
             df_payments = pd.DataFrame(payments_data) if payments_data else pd.DataFrame()
@@ -123,9 +194,11 @@ def mongodb_data_extract_json():
             print(f"Error processing extracted data: {str(e)}")
             raise
 
+    # Definir o fluxo de execução
     users_data = extract_users()
     payments_data = extract_payments()
     process_data(users_data, payments_data)
 
 
+# Criar a DAG
 mongodb_dag = mongodb_data_extract_json()

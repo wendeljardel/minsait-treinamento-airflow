@@ -1,0 +1,55 @@
+development:
+  apis:
+    coingecko:
+      url: "https://api.coingecko.com/api/v3/simple/price"
+      timeout: 10
+      coins:
+        - bitcoin
+        - ethereum
+        - cardano
+  validation:
+    min_price: 0.00001
+    required_coins:
+      - bitcoin
+      - ethereum
+      - cardano
+    max_price_change: 20  # percentage
+  storage:
+    batch_size: 1000
+    retention_days: 30
+  monitoring:
+    alert_thresholds:
+      eth_btc_ratio: 0.1
+      price_change: 15
+  retries:
+    max_attempts: 3
+    delay_minutes: 2
+    max_delay_minutes: 10
+
+production:
+  apis:
+    coingecko:
+      url: "https://pro-api.coingecko.com/api/v3/simple/price"
+      timeout: 30
+      coins:
+        - bitcoin
+        - ethereum
+        - cardano
+  validation:
+    min_price: 0.00001
+    required_coins:
+      - bitcoin
+      - ethereum
+      - cardano
+    max_price_change: 20
+  storage:
+    batch_size: 5000
+    retention_days: 90
+  monitoring:
+    alert_thresholds:
+      eth_btc_ratio: 0.1
+      price_change: 15
+  retries:
+    max_attempts: 5
+    delay_minutes: 5
+    max_delay_minutes: 30
