@@ -1,0 +1,18 @@
+# Apache Airflow e suas dependências
+apache-airflow==2.7.1
+apache-airflow-providers-postgres==5.6.0
+
+# Bibliotecas para manipulação de dados
+pandas==2.0.3
+numpy==1.24.3
+
+# Bibliotecas para conexão com banco de dados
+psycopg2-binary==2.9.6
+sqlalchemy==1.4.47
+
+# Bibliotecas para API e processamento
+requests==2.31.0
+python-dotenv==1.0.0
+
+# Google Gemini API para geração de insights
+google-generativeai==0.3.0

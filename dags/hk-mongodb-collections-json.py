@@ -11,19 +11,11 @@ import json
 import pandas as pd
 from dotenv import load_dotenv
 from airflow.decorators import task, dag
-from pymongo import MongoClient
+from airflow.providers.mongo.hooks.mongo import MongoHook
 from datetime import datetime, timedelta
 
 # Carregar variáveis de ambiente
 load_dotenv()
-
-# Configurações do MongoDB
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://minsair-user:QLZcPUxeyrEf@minsait-airflow.tvllgfj.mongodb.net/?appName=minsait-airflow')
-MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'minsait')
-
-# Verificar se as variáveis necessárias estão definidas
-if not MONGODB_URI or not MONGODB_DB_NAME:
-    raise ValueError("MONGODB_URI and MONGODB_DB_NAME must be set in environment variables")
 
 # Argumentos padrão da DAG
 default_args = {
@@ -73,8 +65,8 @@ def mongodb_data_extract_json():
             Lista de dicionários contendo os dados dos usuários
         """
         try:
-            client = MongoClient(MONGODB_URI)
-            db = client[MONGODB_DB_NAME]
+            hook = MongoHook(conn_id='mongodb_minsait')
+            db = hook.get_conn()
 
             try:
                 users_cursor = db.users.find({})
@@ -102,7 +94,7 @@ def mongodb_data_extract_json():
                 print(f"Error during Users collection processing: {str(e)}")
                 raise
             finally:
-                client.close()
+                hook.close_conn()
 
         except Exception as e:
             print(f"Error connecting to MongoDB: {str(e)}")
@@ -117,8 +109,8 @@ def mongodb_data_extract_json():
             Lista de dicionários contendo os dados de pagamentos
         """
         try:
-            client = MongoClient(MONGODB_URI)
-            db = client[MONGODB_DB_NAME]
+            hook = MongoHook(conn_id='mongodb_minsait')
+            db = hook.get_conn()
 
             try:
                 payments_cursor = db.payments.find({})
@@ -146,7 +138,7 @@ def mongodb_data_extract_json():
                 print(f"Error during Payments collection processing: {str(e)}")
                 raise
             finally:
-                client.close()
+                hook.close_conn()
 
         except Exception as e:
             print(f"Error connecting to MongoDB: {str(e)}")

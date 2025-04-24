@@ -7,12 +7,14 @@ development:
         - bitcoin
         - ethereum
         - cardano
+        - tether
   validation:
     min_price: 0.00001
     required_coins:
       - bitcoin
       - ethereum
       - cardano
+      - tether
     max_price_change: 20  # percentage
   storage:
     batch_size: 1000
@@ -35,12 +37,14 @@ production:
         - bitcoin
         - ethereum
         - cardano
+        - tether
   validation:
     min_price: 0.00001
     required_coins:
       - bitcoin
       - ethereum
       - cardano
+      - tether
     max_price_change: 20
   storage:
     batch_size: 5000

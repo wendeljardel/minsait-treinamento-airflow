@@ -16,7 +16,8 @@ def transform_prices(data: Dict) -> Dict:
         prices = {
             'BTC': data['bitcoin']['usd'],
             'ETH': data['ethereum']['usd'],
-            'ADA': data['cardano']['usd']
+            'ADA': data['cardano']['usd'],
+            'USDT': data['tether']['usd']
         }
 
         return {
