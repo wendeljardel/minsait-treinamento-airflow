@@ -51,7 +51,8 @@ def weather_pipeline():
         create_tables, 
         extracted_data_path, 
         transformed_data_path, 
-        db_loaded, insights
+        db_loaded, 
+        insights
         )
 
 # Instanciando a DAG

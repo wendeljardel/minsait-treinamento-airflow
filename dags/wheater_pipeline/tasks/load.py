@@ -36,7 +36,7 @@ def load_to_postgres(input_file: str):
         summary_df = df[['city_name', 'country', 'temperature', 'humidity', 
                          'weather_main', 'weather_description', 'temp_category']]
         
-        e
+        
         summary_df.to_sql('weather_summary', engine, if_exists='replace', index=False)
         
         print("Resumo dos dados carregado na tabela 'weather_summary' para análise do Gemini")
