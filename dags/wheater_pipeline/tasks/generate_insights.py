@@ -17,19 +17,19 @@ def generate_gemini_insights(db_confirmation: str):
     """
     print("Iniciando geração de insights com a API Gemini...")
     
-    # Configura a API Gemini
+    
     genai.configure(api_key=GEMINI_API_KEY)
     model = genai.GenerativeModel('gemini-2.0-flash')
     
-    # Conecta ao PostgreSQL e obtém os dados de resumo
+    
     engine = create_engine(POSTGRES_CONN_STRING)
     query = "SELECT * FROM weather_summary"
     df = pd.read_sql(query, engine)
     
-    # Prepara os dados para enviar ao Gemini
+    
     data_description = df.to_string()
     
-    # Criar prompts específicos para obter insights valiosos
+   
     prompts = [
         f"""Analise os seguintes dados meteorológicos e identifique padrões ou correlações interessantes. 
         Foque em relações entre temperatura, umidade e condições climáticas:
@@ -44,7 +44,7 @@ def generate_gemini_insights(db_confirmation: str):
         {data_description}"""
     ]
     
-    # Gera insights para cada prompt
+    
     insights = []
     for i, prompt in enumerate(prompts):
         try:

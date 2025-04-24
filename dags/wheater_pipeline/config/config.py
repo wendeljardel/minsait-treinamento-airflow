@@ -1,6 +1,9 @@
+from airflow.models import Variable
+
 # Credenciais e configurações
 OPENWEATHER_API_KEY = "baae9dd9944633532474f8ad4062b3d5"
-GEMINI_API_KEY = "AIzaSyC99DM85FQnh0IbEOb2tm-S7TTjDSI5csA"
+GEMINI_API_KEY = Variable.get("gemini_key")
+
 
 # Conexão PostgreSQL
 POSTGRES_USER = "postgres"

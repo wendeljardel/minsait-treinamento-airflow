@@ -18,16 +18,16 @@ def transform_weather_data(input_file: str):
     """
     print("Iniciando transformação dos dados meteorológicos...")
     
-    # Carrega os dados do arquivo JSON
+    
     with open(input_file, 'r', encoding='utf-8') as f:
         weather_data = json.load(f)
     
-    # Converte para DataFrame do pandas para facilitar a manipulação
+    
     transformed_data = []
     
     for data in weather_data:
         try:
-            # Extrai apenas os campos relevantes
+            
             transformed_item = {
                 'city_id': data.get('id'),
                 'city_name': data.get('city_name'),
@@ -55,7 +55,7 @@ def transform_weather_data(input_file: str):
                 'processing_timestamp': datetime.now().isoformat()
             }
             
-            # Adiciona dados enriquecidos
+            
             # Classificação de temperatura
             temp = transformed_item['temperature']
             if temp is not None:
@@ -73,7 +73,7 @@ def transform_weather_data(input_file: str):
         except Exception as e:
             print(f"Erro ao transformar dados: {str(e)}")
     
-    # Converte para DataFrame
+    
     df = pd.DataFrame(transformed_data)
     
     # Realiza limpeza de dados
@@ -84,10 +84,10 @@ def transform_weather_data(input_file: str):
     
     df[numeric_columns] = df[numeric_columns].fillna(0)
     
-    # Remove duplicatas (se houver)
+   
     df = df.drop_duplicates(subset=['city_id', 'extraction_timestamp'])
     
-    # Salva os dados transformados
+    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = f"temp/weather_transformed_{timestamp}.csv"
     df.to_csv(output_file, index=False)
